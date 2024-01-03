@@ -84,3 +84,39 @@ SET M = N-1;
 );
 END
 ```
+## Title
+分数排名
+## Idea
+```mysql
+select *,
+   rank() over (order by 成绩 desc) as ranking,
+   dense_rank() over (order by 成绩 desc) as dese_rank,
+   row_number() over (order by 成绩 desc) as row_num
+from 班级
+```
+![排名函数](../pictures/rank.png)
+## Code
+```mysql
+select score, dense_rank() over (order by score desc) as 'rank'
+from Scores
+```
+用rank() over()对num进行开窗排序，原因是连续相同的数字，num的id和rank差值是定值；不连续，差值不同
+## Title
+使用rank()
+## Idea
+连续的num
+## Code
+```mysql
+select distinct num as ConsecutiveNums
+from
+    (select 
+        id,
+        num,
+        cast(row_number() over(order by id) as signed) - cast(rank() over(partition by num order by id) as signed) as diff
+    from Logs) a
+group by num,diff
+having count(*) >=3
+```
+
+
+
