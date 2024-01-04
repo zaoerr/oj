@@ -30,3 +30,23 @@ func main() {
 	return
 }
 ```
+## 和大于k的最短子数组
+### Idea
+双指针
+### 代码
+```Go
+func Solution(array []int, k int) int {
+	lp, rp, sum := 0, 0, 0
+	minLength := math.MaxInt
+	for rp < len(array) {
+		sum += array[rp]
+		for lp <= rp && sum >= k {
+			minLength = min(minLength, rp-lp+1)
+			sum -= array[lp]
+			lp++
+		}
+		rp++
+	}
+	return minLength
+}
+```
