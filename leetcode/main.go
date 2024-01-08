@@ -1,58 +1,49 @@
 package main
 
-import (
-	"strconv"
-	"strings"
-)
+import "math/bits"
 
-func numberOfPowerfulInt(start int64, finish int64, limit int, s string) int64 {
-	low := strconv.FormatInt(start, 10)
-	high := strconv.FormatInt(finish, 10)
-	n := len(high)
-	diff := n - len(s)
-	low = strings.Repeat("0", n-len(low)) + low
-
-	memo := make([]int64, n)
-	for i := range memo {
-		memo[i] = -1
+func maxPartitionsAfterOperations(s string, k int) int {
+	n := len(s)
+	type args struct {
+		i       int
+		mask    int
+		changed bool
 	}
-
-	var dfs func(int, bool, bool) int64
-	dfs = func(i int, limitLow, limitHigh bool) (res int64) {
+	memo := map[args]int{}
+	var dfs func(int, int, bool) int
+	dfs = func(i, mask int, changed bool) (res int) {
 		if i == n {
 			return 1
 		}
-		// be careful!
-		if !limitLow && !limitHigh {
-			p := &memo[i]
-			if *p != -1 {
-				return *p
-			}
-			defer func() { *p = res }()
-		}
 
-		lo := 0
-		if limitLow {
-			lo = int(low[i] - '0')
+		a := args{i, mask, changed}
+		if v, ok := memo[a]; ok {
+			return v
 		}
-		hi := 9
-		if limitHigh {
-			hi = int(high[i] - '0')
-		}
-
-		if i < diff {
-			for d := lo; d <= min(hi, limit); d++ {
-				res += dfs(i+1, limitLow && d == lo, limitHigh && d == hi)
-			}
+		bit := 1 << (s[i] - 'a')
+		newMask := mask | bit
+		if bits.OnesCount(uint(newMask)) > k {
+			res = dfs(i+1, bit, changed) + 1
 		} else {
-			x := int(s[i-diff] - '0')
-			if x >= lo && x <= min(hi, limit) {
-				res += dfs(i+1, limitLow && x == lo, limitHigh && x == hi)
+			res = dfs(i+1, newMask, changed)
+		}
+
+		if !changed {
+			for j := 0; j < 26; j++ {
+				newMask := mask | 1<<j
+				if bits.OnesCount(uint(newMask)) > k {
+					res = max(res, dfs(i+1, 1<<j, true)+1)
+				} else {
+					res = max(res, dfs(i+1, newMask, true))
+				}
+
 			}
 		}
-		return
+
+		memo[a] = res
+		return res
 	}
-	return dfs(0, true, true)
+	return dfs(0, 0, false)
 }
 
 func main() {
